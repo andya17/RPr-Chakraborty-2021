@@ -1,16 +1,17 @@
 ---
 title: "Reproduction of Chakraborty 2021: An intracategorical analysis of COVID-19 and people with disabilities"
-author: "Joseph Holler, Junyi Zhou, Peter Kedron, Drew An-Pham, Derrick Burt"
+author: "Joseph Holler, Junyi Zhou, Peter Kedron, Drew An-Pham, Derrick Burt, Andy Atallah"
 date: "`r Sys.Date()`"
 output: pdf_document
 editor_options:
   markdown:
     wrap: sentence
+  chunk_output_type: console
 knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs/report") })
 ---
 
-Version 2.0 \| First Created July 7, 2021 \| Updated June 26, 2023
+Version 2.1 \| First Created July 7, 2021 \| Updated September 21, 2023
 
 # Abstract
 
@@ -245,6 +246,7 @@ rm(acs_pov)
 ```
 
 Optionally, save the raw ACS data to `data/raw/public/acs.gpkg` for use in GIS software.
+# It seems like running this will not allow the calculation of percentages.
 
 ```{r save-ACS, message = F, eval = FALSE}
 # Save downloaded acs data to acs.gpkg
@@ -416,6 +418,7 @@ tm_disability_rates
 Calculate descriptive statistics for dependent COVID-19 rate and independent socio-demographic characteristics, reproducing the min, max, mean, and SD columns of original study table 1.
 
 **Planned deviation for reanalysis**: We also calculate the Shapiro Wilk test for normality.
+# Does this address a problem not addressed by the original study?
 
 ```{r descriptive-statistics}
 acs_covid_stats <- acs_covid %>%
@@ -605,7 +608,8 @@ acs_covid %>%
 ```
 
 The join worked, highlighting the same 13 counties with inconsistent incidence rates.
-This also confirms that our reproduced dependent variable is identical to the original dependent variable with the exception of these three counties.
+This also confirms that our reproduced dependent variable is identical to the original dependent variable with the exception of these three counties. 
+#Three or 13 counties?
 
 ## Bivariate nonparametric correlation analysis
 
@@ -665,6 +669,8 @@ Two correlations change direction, with both *Native American* race (illustrated
 Instabilities between the parametric and non-parametic correlations arise from variables with very skewed distributions and/or weak correlations at the county level.
 Some difference may also be attributable to the 13 counties with data errors in the COVID-19 Incidence Rate.
 In such distributions, outlier observations have more weight in the parametric Person's R test than in the non-parametric Spearman's Rho test.
+
+# What is the reason for plotting this here?
 
 ```{r plot-bivariate, fig.width=4, fig.height=4}
 plot(acs_covid$native_pct,
