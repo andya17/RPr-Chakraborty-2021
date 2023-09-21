@@ -418,7 +418,8 @@ tm_disability_rates
 Calculate descriptive statistics for dependent COVID-19 rate and independent socio-demographic characteristics, reproducing the min, max, mean, and SD columns of original study table 1.
 
 **Planned deviation for reanalysis**: We also calculate the Shapiro Wilk test for normality.
-# Does this address a problem not addressed by the original study?
+
+--Does this address a problem not addressed by the original study?--
 
 ```{r descriptive-statistics}
 acs_covid_stats <- acs_covid %>%
@@ -609,7 +610,8 @@ acs_covid %>%
 
 The join worked, highlighting the same 13 counties with inconsistent incidence rates.
 This also confirms that our reproduced dependent variable is identical to the original dependent variable with the exception of these three counties. 
-#Three or 13 counties?
+
+--Three or 13 counties?--
 
 ## Bivariate nonparametric correlation analysis
 
@@ -670,7 +672,7 @@ Instabilities between the parametric and non-parametic correlations arise from v
 Some difference may also be attributable to the 13 counties with data errors in the COVID-19 Incidence Rate.
 In such distributions, outlier observations have more weight in the parametric Person's R test than in the non-parametric Spearman's Rho test.
 
-# What is the reason for plotting this here?
+--What is the reason for plotting this here?--
 
 ```{r plot-bivariate, fig.width=4, fig.height=4}
 plot(acs_covid$native_pct,
@@ -798,6 +800,8 @@ Therefore, additional steps are required to append the Kulldorff scan results to
 This can be done by assigning unique cluster ID's to each county within a cluster.
 Clusters include the county at the center of a cluster and all of the other counties within the cluster radius.
 Therefore, we use the FIPS code of the county at the center of each cluster as the unique cluster ID.
+
+-- Why is only one cluster considered primary?--
 
 ```{r assign-cluster-IDs, message = FALSE}
 # list of primary cluster locations (counties)
