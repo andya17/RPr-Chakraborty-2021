@@ -358,13 +358,11 @@ However, we replace the missing data with zeros, producing results identical to 
 
 ```{r missing data}
 # county with missing data
-missing_data <- filter(acs_covid, is.na(bpov_pct)) %>% 
+filter(acs_covid, is.na(bpov_pct)) %>% 
+  pivot_wider() %>%
   st_drop_geometry() %>%
-  t() %>%
   kable() %>%
   kable_styling(font_size = 7, latex_options = 'hold_position')
-
-kbl(missing_data)
 
 # replace NA with 0 for missing data
 acs_covid[is.na(acs_covid$bpov_pct), ]$bpov_pct <- 0
