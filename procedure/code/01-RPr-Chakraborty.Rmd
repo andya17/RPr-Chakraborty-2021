@@ -358,7 +358,13 @@ However, we replace the missing data with zeros, producing results identical to 
 
 ```{r missing data}
 # county with missing data
-filter(acs_covid, is.na(bpov_pct)) %>% st_drop_geometry() %>% kable()
+missing_data <- filter(acs_covid, is.na(bpov_pct)) %>% 
+  st_drop_geometry() %>%
+  t() %>%
+  kable() %>%
+  kable_styling(font_size = 7, latex_options = 'hold_position')
+
+kbl(missing_data)
 
 # replace NA with 0 for missing data
 acs_covid[is.na(acs_covid$bpov_pct), ]$bpov_pct <- 0
@@ -668,7 +674,7 @@ correlations %>%
 
 Three variables change significance levels, with *Native American* and *Other* races gaining significance and *age 18-34* losing significance.
 Two correlations change direction, with both *Native American* race (illustrated in scatterplot below) and *Female* households switching from positive correlations to negative correlations.
-Instabilities between the parametric and non-parametic correlations arise from variables with very skewed distributions and/or weak correlations at the county level.
+Instabilities between the parametric and non-parametric correlations arise from variables with very skewed distributions and/or weak correlations at the county level.
 Some difference may also be attributable to the 13 counties with data errors in the COVID-19 Incidence Rate.
 In such distributions, outlier observations have more weight in the parametric Person's R test than in the non-parametric Spearman's Rho test.
 
@@ -680,7 +686,7 @@ plot(acs_covid$native_pct,
   xlab = "Percent Native American",
   ylab = "COVID-19 Incidence",
   pch = 16,
-  col = rgb(0, 0, 0, 0.05),
+  col = rgb(0, 0, 0, 0.15),
   cex.lab = 0.8,
   cex.axis = 0.5,
 )
@@ -1398,6 +1404,10 @@ To further interrogate the differences in sets of secondary clusters, we must un
 
 The differences between these three approaches have very significant impacts on the results (see the differences in results in the **two maps** above) and it is impossible to control for all of the differences with the available parameters.
 Most fundamentally, SaTScan develops sets of secondary clusters from a universe of just one most likely cluster per location with no default limitation its statistical significance, whereas SpatialEpi may consider multiple possible cluster sizes for each location with a default limitation of maximum 0.05 *p* for each cluster.
+
+-- Missing a word in the sentence above?--
+
+
 These fundamental differences are evident in the spatial distribution of clusters.
 For example, New York City is the most likely cluster in all analyses.
 For counties near New York, the radius of the most likely cluster is large and geographically overlaps New York City.
@@ -1422,6 +1432,8 @@ In sum, there are three construct validity issues with the original study's COVI
 1.  Two sets of overlapping secondary clusters are included in the SaTScan output: hierarchical clusters and clusters optimized by GINI coefficient.
 2.  Only the 96 counties at the center of a cluster are considered in the risk classification.
 3.  The geographic patterns and cluster relative risk scores of secondary clusters are limited to circles or ellipses and are apparently sensitive to both the geographic shape and situation of high-risk clusters and to subjective decisions in parameters and algorithms.
+
+-- Where in the text is proof of this sensitivity? --
 
 ## Preprocess data for GEE modelling
 
@@ -1746,6 +1758,8 @@ geewhisker_fig
 rm(t2whisker)
 ```
 
+-- This does not run automatically like other figures. --
+
 The figure above illustrates five model variations, starting with the results published in the original study.
 The next two models make incremental adjustments to the research design and are most compatible with the goals of a reproduction study.
 
@@ -1863,12 +1877,12 @@ Map each county's weight in GEE model.
 tm_gee_weights <- tm_shape(gee_resid) +
   tm_polygons("w",
     title = "Race Model Weights",
-    style = "jenks",
+    style = "quantile",
     border.alpha = .2,
     lwd = 0.2,
     palette = "Oranges",
     legend.hist = FALSE,
-    midpoint = 0
+    #midpoint = 0,
   ) +
   tm_shape(state) +
     tm_borders("grey", lwd = .5) +
@@ -1886,7 +1900,7 @@ tm_gee_weights
 # re
 ```
 
-
+-- Comment above is not finished. --
 
 ```{r save-figures, eval = F}
 # save figures as image files

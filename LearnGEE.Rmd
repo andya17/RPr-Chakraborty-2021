@@ -1,0 +1,169 @@
+---
+title: "Learn GEE"
+author: "Joseph Holler"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+  latex_engine: xelatex
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("tidyverse")
+```
+
+This learning exercise is based upon Hanley et al (2003), <https://doi.org/10.1093/aje/kwf215>
+
+## Learn GEE
+
+-   Avoid treating observations from the same "cluster" as independent
+-   Examples of "clusters" include:
+    -   repeated measurements for the same person over time
+    -   surveys of multiple members of the same household
+    -   multiple observations in the same geographic region?
+-   Some approaches to resolving this problem include
+    -   discarding repeated observations
+    -   including repeated observations but calculating statistical power based on the number of clusters rather than the number of observations
+-   How can you use all the data points while also not exaggerating your statistical power?
+-   GEE uses "weighted combinations of observations to extract the appropriate amount of information from correlated data"
+
+Elements of notation:
+
+|        Variables        | Parameter Symbol | Statistic Symbol |
+|:-----------------------:|:----------------:|:----------------:|
+|        household        |       $h$        |                  |
+|          mean           |      $\mu$       |  $\overline{y}$  |
+|   standard deviation    |     $\delta$     |                  |
+|       proportion        |       $P$        |       $p$        |
+| regression coefficient  |       $B$        |       $b$        |
+| correlation coefficient |       $R$        |       $r$        |
+
+## Variance of Weighted Sum
+
+1.  Make a correlation matrix out of the variable and its weights
+2.  For each row/column combination, find: row-weight \* column-weight \* row-δ \* column-δ \* row-column-$R$
+3.  Sum the products from step 2
+
+-   If there is no correlation, then off-diagonal R values are 0, and the weighted variance is simply the sum of squared weights and variances.
+-   standard error of a mean is: $\mu$ / $\sqrt{n}$ ... and this is what you get if there is no correlation and equal weights in the sample
+-   standard error of an estimate is basically the standard deviation of it...
+-   if data is correlated, the standard error increases (since you're no longer multiplying by 0 off-diagonal)
+
+## What if some observations are clustered?
+
+-   three children: 1 single child and 2 siblings
+-   optimal weight for observations correlated within clusters is: 1 / (1 + $r$($k$-1)) where $k$ is the size of the cluster
+-   evidence that this is the optimal weight is shown in Figure 3 and described as provable with calculus on pg 368
+-   as correlation within clusters approaches 1, the effective sample size of the study decreases to the number of clusters. This make sense, as perfect correlation with clusters means that a cluster is effectively a single observation
+
+## Estimating the mean and correlation
+
+First, create sample data and calculate a matrix to use as a mask for the off-diagonal products for calculating variance.
+Also calculate the denominators for variance and covariance calculations.
+
+```{r create-sample-data}
+# create simple data 
+val <- c(15, 13, 10, 9, 8)
+grp <- c(1, 1, 2, 2, 2)
+fig4data <- data.frame(val, grp)
+rm(val, grp)
+
+n <- length(fig4data$val)
+m <- matrix(nrow = n, ncol = n)
+
+fig4data <- fig4data %>% 
+  group_by(grp) %>% 
+  mutate(k = n(), w = 1 / n) %>% 
+  ungroup()
+
+for (x in 1:(n-1)){
+  for(y in (x+1):n){
+    if(fig4data[x,"grp"] == fig4data[y,"grp"]){
+      m[x,y] <- 1
+    }
+  }
+}
+
+var_d <- n - 1
+covar_d <- sum(m, na.rm = TRUE) - 1
+```
+
+Here is a process for the estimation:
+
+-   start with assumption of no correlation $R$ = 0
+-   calculate estimate of $\mu$ based on $R$ = 0 (no auto-correlation)
+-   calculate new estimate $r$ of $R$ 
+-   recalculate $w$ weight for each observation as 1 / (1 + ($k$-1)$r$)
+
+```{r reweight function}
+reweight <- function(k, r) {
+    # new weight is 1 / (1 + (k-1)r)
+    return(1 / (1 + r * (k - 1)))
+}
+```
+
+-   Repeat until you reach convergence (no more change in $R$)
+
+```{r fig4iterate}
+r_prior <- 1
+r <- 0
+iteration <- 1
+
+while(abs(r - r_prior) > 0.001){
+  # new weight is 1 / (1 + (k-1)r)
+  fig4data <- fig4data %>% mutate(w = reweight(fig4data$k, r))
+  
+  # weighted mean
+  mu <- sum(fig4data$val * fig4data$w) / sum(fig4data$w)
+  
+  resid <- fig4data$val - mu
+  
+  # estimated variance is sum of diagonal products divided by n(5) - 1
+  v <- sum(resid^2) / var_d
+  
+  # estimated covariance is sum of off-diagonal products divided by n(4) - 1
+  c <- sum(outer(resid, resid, "*") * m, na.rm = TRUE) / covar_d
+  
+  # estimated correlation is estimated covariance / estimated variance
+  r_prior <- r
+  r <- c / v
+
+  cat("iteration:", iteration, "\n",
+      "weighted mean:", mu, "\n",
+      "variance:", v, "\n",
+      "covariance:", c, "\n",
+      "correlation:", r, "\n",
+      "effective sample size:", sum(fig4data$w), "\n\n"
+      )
+  
+  iteration <- iteration + 1
+}
+```
+
+### Discussion notes
+
+-   For regression, you would use find the within-cluster correlation of regression residuals to re-define weights. Therefore, I wonder if the geepack algorithm can output the residuals or even the final set of weights?
+-   Hierarchical & multilevel models estimate between-cluster variation and incorporate this into standard errors, while GEE does the opposite---estimating within-cluster correlation.
+
+Let's simulate the weights for observations within varying sizes of clusters
+
+```{r weight-by-cluster-size}
+# create simple data 
+cluster_size <- c(1, 2, 3, seq(5, 20, by = 5), seq(30, 50, by = 10))
+wbyk <- data.frame(cluster_size)
+rm(cluster_size)
+
+wbyk$r0_00 <- round(reweight(wbyk$cluster_size, 0), 2)
+wbyk$r0_25 <- round(reweight(wbyk$cluster_size, 0.25), 2)
+wbyk$r0_05 <- round(reweight(wbyk$cluster_size, 0.5), 2)
+wbyk$r1_00 <- round(reweight(wbyk$cluster_size, 1), 2)
+
+wbyk
+```
+
+-   If there is no correlation within clusters, then the $r$ will be 0 or near 0 and the weights will be near 1
+-   If there is perfect correlation, then $r$ will approach 1 and the weights will be 1 / `cluster size`.
+-   The implication is clear: if there is correlation within clusters, then then observations from small clusters weigh much more heavily than observations from large clusters. Keep in mind this is not correlation on a per cluster basis-- this is a single measure for within-cluster correlation for the whole dataset.
+-   In this scenario, outliers in large clusters will have little effect on the model fitting.
+-   However, outliers in small clusters will have an outsized effect on the model fit.
