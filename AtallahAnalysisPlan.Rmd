@@ -23,6 +23,8 @@ The paper which I aim to revise is entitled Social inequities in the distributio
 1. The revised map will be shown in the same section as in the original paper (under "Interpret GEE Model").
 2. The revised table will be shown in the same section as in the original paper (under "Missing Data).
 3. The revised plot will be shown in the same section as in the original paper (at the end of "Bivariate nonparametric correlation analysis").
+4. The content of the discussion section will be altered such that information from Emily's work will be incorporated into the existing, primary discussion.
+5. The conclusion section will appear after the discussion section.
 
 ## Discussion
 
