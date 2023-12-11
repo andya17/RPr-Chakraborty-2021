@@ -11,7 +11,7 @@ knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "../../docs") })
 ---
 
-Version 2.1 \| First Created July 7, 2021 \| Updated September 21, 2023
+Version 2.1 \| First Created July 7, 2021 \| Updated December 10, 2023
 
 # Abstract
 
@@ -374,7 +374,7 @@ acs_covid[is.na(acs_covid$bpov_pct), ]$bpov_pct <- 0
 acs_covid[is.na(acs_covid$apov_pct), ]$apov_pct <- 0
 ```
 
-**Reanalysis change**: The above change to the table transposes it so that it fits on the page. This allows the reader to see all values and thus understand the section more readily.
+**Reanalysis change**: The above change to the table transposes it via the `t` function so that it fits on the page when knitted. The code also holds the table in place on the page via the `latex_options` argument to the `kable_styling` function. This change allows the reader to see all values and thus understand the section more readily.
 
 ## Map COVID-19 incidence
 
@@ -694,7 +694,7 @@ lines(abline(lm(acs_covid$covid_rate ~ acs_covid$native_pct)))
 rm(spearmans_rho, pearsons_r, correlations, table1, df)
 ```
 
-**Reanalysis change**: The above change to the plot may allow for easier viewing of the outlier points (outside of the clump of points representing low percentages of Native Americans)
+**Reanalysis change**: The alpha value of the `rgb` function was changed from 0.05 to 0.2 (an increase in opacity). The above change to the plot may allow for easier viewing of the outlier points (outside of the clump of points representing low percentages of Native Americans).
 
 ## Kulldorff spatial scan statistic
 
@@ -1874,7 +1874,7 @@ Map each county's weight in GEE model.
 tm_gee_weights <- tm_shape(gee_resid) +
   tm_polygons("w",
     title = "Race Model Weights",
-    style = "quantile",
+    style = "jenks",
     border.alpha = .2,
     lwd = 0.2,
     palette = "Oranges",
@@ -1896,7 +1896,7 @@ tm_gee_weights
 
 ```
 
-**Reanalysis change**: The above change to the map removed the parameter "midpoint" and thus allowed for the visualization of the full color ramp.
+**Reanalysis change**: The above change to the map removed the `midpoint` argument from the creation of the map (via the `tmap` package) and thus allowed for the visualization of the full color ramp, which had inadvertently been only half visible.
 
 ```{r save-figures, eval = F}
 # save figures as image files
@@ -1965,7 +1965,9 @@ Finally, there are well-known problems with the testing and reporting of COVID-1
 
 This analysis accounted for **first order spatial effects** of regional difference by including states in the clustering criteria for GEE models. The analysis also accounted for some **second order spatial effects** by including a relative risk score for COVID-19 spatial clusters in the clustering criteria for GEE models. However, the GEE method simply uses correlation matrices to weight each county observation according to the number of observations in its cluster and the overall within-cluster correlation of standard errors. Additionally, the analysis did not account for **spatial anisotropies**, as the Kulldorff spatial scan statistic was constrained to circular non-directional clusters. Last, it is important to note that the spatial dependence between counties in different clusters is not modeled, even if the counties are adjacent to each other.
 
-**Reanalysis change**: The above change integrates the two previous discussion sections (by Emily and Professor Holler) into one discussion section with limited additional content. This change will hopefully permit readers to understand the discussion of the paper as a more cohesive section.
+Last, a small reanalysis change altered the alpha value of a scatterplot which plots the correlation of COVID-19 incidence and the percentage of individuals who are Native American in a county. This plot is visible in the "Bivariate nonparametric correlation analysis" section. Raising the alpha value is of interest due to the increased visibility of outlier points, for readers are more easily able to examine all the data points represented in the graph. This change may increase understanding of the section directly preceding the plot, where it is argued that the percent Native American variable has a distribution which may be unbalanced or weak and that the shift in direction of the associated correlation based on the type of test used may be caused by outlier values. Interpreting this section of the report may be made simpler in that the reader is able to see points for counties with a high percentage of Native American individuals (greater than 6%) and draw the conclusion that these are the data points which may have been valued more highly in the parametric test than the nonparametric test, leading to a slight difference in correlation coefficient and a difference in sign.
+
+**Reanalysis change**: The above change integrates the two previous discussion sections (by Emily and Professor Holler) into one discussion section with limited additional content. This change will hopefully permit readers to understand the discussion of the paper as a more cohesive section. A paragraph was also added to add clarity to the change made to the scatterplot of data concerning Native American populations.
 
 # Conclusion
 
